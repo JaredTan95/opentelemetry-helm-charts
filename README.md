@@ -26,19 +26,39 @@ The chart can be used to install [OpenTelemetry Collector](https://github.com/op
 in a Kubernetes cluster. More detailed documentation can be found in
 [OpenTelemetry Collector chart directory](./charts/opentelemetry-collector).
 
+### OpenTelemetry Demo
+
+The chart can be used to install [OpenTelemetry Demo](https://github.com/open-telemetry/opentelemetry-demo)
+in a Kubernetes cluster. More detailed documentation can be found in
+[OpenTelemetry Demo chart directory](./charts/opentelemetry-demo).
+
+### OpenTelemetry Operator
+
+The chart can be used to install [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator)
+in a Kubernetes cluster. More detailed documentation can be found in
+[OpenTelemetry Operator chart directory](./charts/opentelemetry-operator).
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 Approvers ([@open-telemetry/helm-approvers](https://github.com/orgs/open-telemetry/teams/helm-approvers)):
 
+- [Alex Birca](https://github.com/Allex1), Adobe
+- [Pierre Tessier](https://github.com/puckpuck), Honeycomb
+
+Emeritus Approvers:
+
 - [Naseem K. Ullah](https://github.com/naseemkullah), Transit
-- [Tyler Helmuth](https://github.com/TylerHelmuth), New Relic
 
 Maintainers ([@open-telemetry/helm-maintainers](https://github.com/orgs/open-telemetry/teams/helm-maintainers)):
 
-- [Tigran Najaryan](https://github.com/tigrannajaryan), Splunk
 - [Dmitrii Anoshin](https://github.com/dmitryax), Splunk
+- [Tyler Helmuth](https://github.com/TylerHelmuth), Honeycomb
+
+Emeritus Maintainers:
+
+- [Tigran Najaryan](https://github.com/tigrannajaryan), Splunk
 
 Learn more about roles in the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md).
 

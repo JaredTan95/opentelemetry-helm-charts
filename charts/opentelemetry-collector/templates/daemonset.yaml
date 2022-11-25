@@ -5,11 +5,23 @@ metadata:
   name: {{ include "opentelemetry-collector.fullname" . }}-agent
   labels:
     {{- include "opentelemetry-collector.labels" . | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   selector:
     matchLabels:
       {{- include "opentelemetry-collector.selectorLabels" . | nindent 6 }}
-      component: agent-collector
+      {{- include "opentelemetry-collector.component" . | nindent 6 }}
+  updateStrategy:
+    {{- if eq .Values.rollout.strategy "RollingUpdate" }}
+    {{- with .Values.rollout.rollingUpdate }}
+    rollingUpdate:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- end }}
+    type: {{ .Values.rollout.strategy }}
   template:
     metadata:
       annotations:
@@ -17,7 +29,7 @@ spec:
         {{- include "opentelemetry-collector.podAnnotations" . | nindent 8 }}
       labels:
         {{- include "opentelemetry-collector.selectorLabels" . | nindent 8 }}
-        component: agent-collector
+        {{- include "opentelemetry-collector.component" . | nindent 8 }}
         {{- include "opentelemetry-collector.podLabels" . | nindent 8 }}
     spec:
       {{- $podValues := deepCopy .Values }}

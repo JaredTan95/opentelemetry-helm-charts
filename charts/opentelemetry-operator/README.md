@@ -14,38 +14,13 @@ At this point, it has [OpenTelemetry Collector](https://github.com/open-telemetr
 In Kubernetes, in order for the API server to communicate with the webhook component, the webhook requires a TLS
 certificate that the API server is configured to trust. There are three ways for you to generate the required TLS certificate.
 
-  - The easiest and default method is to install the [cert-manager](https://cert-manager.io/docs/) and set `admissionWebhooks.certManager.enabled` to `true`.
+  - The easiest and default method is to install the [cert-manager](https://cert-manager.io/docs/) and set `admissionWebhooks.certManager.create` to `true`.
     In this way, cert-manager will generate a self-signed certificate. _See [cert-manager installation](https://cert-manager.io/docs/installation/kubernetes/) for more details._
-  - You can also provide your own Issuer by configuring the `admissionWebhooks.certManager.issuerRef` value. You will need
+  - You can provide your own Issuer by configuring the `admissionWebhooks.certManager.issuerRef` value. You will need
     to specify the `kind` (Issuer or ClusterIssuer) and the `name`. Note that this method also requires the installation of cert-manager.
-  - The last way is to manually modify the secret where the TLS certificate is stored. Make sure you set `admissionWebhooks.certManager.enabled` to `false` first.
-    - Create the namespace for the OpenTelemetry Operator and the secret
-      ```console
-      $ kubectl create namespace opentelemetry-operator-system
-      ```
-    - Config the TLS certificate using `kubectl create` command
-      ```console
-      $ kubectl create secret tls opentelemetry-operator-controller-manager-service-cert \
-          --cert=path/to/cert/file \
-          --key=path/to/key/file \
-          -n opentelemetry-operator-system
-      ```
-      You can also do this by applying the secret configuration.
-      ```console
-      $ kubectl apply -f - <<EOF
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: opentelemetry-operator-controller-manager-service-cert
-        namespace: opentelemetry-operator-system
-      type: kubernetes.io/tls
-      data:
-        tls.crt: |
-            # your signed cert
-        tls.key: |
-            # your private key
-      EOF
-      ```
+  - You can use self-signed certificate by configuring the `admissionWebhooks.certManager.enabled` to `false`. Helm will create self-signd cert and secret for you.
+  - You can sideload custom webhooks and certificate by disabling `.Values.admissionWebhooks.create` and `admissionWebhooks.certManager.enabled` while setting your custom cert secret name in `admissionWebhooks.secretName`
+  - You can disable webhooks alltogether by disabling `.Values.admissionWebhooks.create` and setting env var to `ENABLE_WEBHOOKS: "false"`
 
 ## Add Repository
 
@@ -60,14 +35,14 @@ _See [helm repo](https://helm.sh/docs/helm/helm_repo/) for command documentation
 
 ```console
 $ helm install \
-  my-opentelemetry-operator open-telemetry/opentelemetry-operator
+  opentelemetry-operator open-telemetry/opentelemetry-operator
 ```
 
 If you created a custom namespace, like in the TLS Certificate Requirement section above, you will need to specify the namespace with the `--namespace` helm option:
 
 ```console
 $ helm install --namespace opentelemetry-operator-system \
-  my-opentelemetry-operator open-telemetry/opentelemetry-operator
+  opentelemetry-operator open-telemetry/opentelemetry-operator
 ```
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
@@ -77,7 +52,7 @@ _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documen
 The following command uninstalls the chart whose release name is my-opentelemetry-operator.
 
 ```console
-$ helm uninstall my-opentelemetry-operator
+$ helm uninstall opentelemetry-operator
 ```
 
 _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command documentation._

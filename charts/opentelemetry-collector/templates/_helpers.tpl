@@ -6,6 +6,21 @@ Expand the name of the chart.
 {{- end }}
 
 {{/*
+Get component name
+*/}}
+{{- define "opentelemetry-collector.component" -}}
+{{- if eq .Values.mode "deployment" -}}
+component: standalone-collector
+{{- end -}}
+{{- if eq .Values.mode "daemonset" -}}
+component: agent-collector
+{{- end -}}
+{{- if eq .Values.mode "statefulset" -}}
+component: statefulset-collector
+{{- end -}}
+{{- end }}
+
+{{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
@@ -124,9 +139,25 @@ Return if ingress is stable.
 {{- end }}
 {{- end }}
 
-{{- define "opentelemetry-collector.annotations" -}}
-{{- if and (eq .Values.mode "deployment") .Values.annotations }}
-annotations:
-  {{- .Values.annotations | toYaml | nindent 2  }}
-{{- end }}
-{{- end }}
+{{/*
+Return the appropriate apiVersion for podDisruptionBudget.
+*/}}
+{{- define "podDisruptionBudget.apiVersion" -}}
+  {{- if and (.Capabilities.APIVersions.Has "policy/v1") (semverCompare ">= 1.21-0" .Capabilities.KubeVersion.Version) -}}
+    {{- print "policy/v1" -}}
+  {{- else -}}
+    {{- print "policy/v1beta1" -}}
+  {{- end -}}
+{{- end -}}
+
+
+{{/*
+Check if logs collection is enabled via deprecated "containerLogs" or "preset.logsCollection"
+*/}}
+{{- define "opentelemetry-collector.logsCollectionEnabled" }}
+  {{- if eq (toString .Values.containerLogs) "<nil>" }}
+    {{- print .Values.presets.logsCollection.enabled }}
+  {{- else }}
+    {{- print .Values.containerLogs.enabled }}
+  {{- end }}
+{{- end -}}

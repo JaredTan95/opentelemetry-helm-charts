@@ -19,6 +19,9 @@ jobs:
         uses: ./.github/actions/setup
         with:
           create-kind-cluster: "true"
+      
+      - name: Check CRDs
+        run: make check-operator-crds
 
       - name: Install cert-manager
         run: |
@@ -39,13 +42,20 @@ jobs:
           LOCAL_TARGET_ALLOCATOR_IMG="local\/opentelemetry-operator-targetallocator:e2e"
           PUBLIC_TARGET_ALLOCATOR_IMG="ghcr.io\/open-telemetry\/opentelemetry-operator\/target-allocator:0.1.0"
 
-          sed -i "s/$LOCAL_TARGET_ALLOCATOR_IMG/${PUBLIC_TARGET_ALLOCATOR_IMG}/g" ./opentelemetry-operator/tests/e2e/smoke-targetallocator/02-install.yaml
-          sed -i "s/$LOCAL_TARGET_ALLOCATOR_IMG/${PUBLIC_TARGET_ALLOCATOR_IMG}/g" ./opentelemetry-operator/tests/e2e/targetallocator-features/02-install.yaml
+          sed -i "s/$LOCAL_TARGET_ALLOCATOR_IMG/${PUBLIC_TARGET_ALLOCATOR_IMG}/g" ./opentelemetry-operator/tests/e2e/smoke-targetallocator/00-install.yaml
+          sed -i "s/$LOCAL_TARGET_ALLOCATOR_IMG/${PUBLIC_TARGET_ALLOCATOR_IMG}/g" ./opentelemetry-operator/tests/e2e/targetallocator-features/00-install.yaml
 
       - name: Install kuttl
         run: |
-          sudo curl -Lo /usr/local/bin/kubectl-kuttl https://github.com/kudobuilder/kuttl/releases/download/v0.11.1/kubectl-kuttl_0.11.1_linux_x86_64
+          sudo curl -Lo /usr/local/bin/kubectl-kuttl https://github.com/kudobuilder/kuttl/releases/download/v0.12.1/kubectl-kuttl_0.12.1_linux_x86_64
           sudo chmod +x /usr/local/bin/kubectl-kuttl
+          export PATH=$PATH:/usr/local/bin
+
+      - name: Install metrics-server
+        run: |
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+          kubectl patch deployment -n kube-system metrics-server --type "json" -p '[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": --kubelet-insecure-tls}]'
+          kubectl wait --for=condition=available deployment/metrics-server -n kube-system  --timeout=5m
 
       - name: Install opentelemetry-operator chart
         run: |
@@ -55,4 +65,4 @@ jobs:
           kubectl wait --timeout=5m --for=condition=available deployment opentelemetry-operator-controller-manager -n opentelemetry-operator-system
 
       - name: Run e2e tests
-        run:  kubectl kuttl test ./opentelemetry-operator/tests/e2e --config ./charts/opentelemetry-operator/release/kuttl-test.yaml
+        run:  kubectl kuttl test ./opentelemetry-operator/tests/e2e --config ./charts/opentelemetry-operator/kuttl-test.yaml

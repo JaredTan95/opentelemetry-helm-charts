@@ -72,41 +72,9 @@ config:
 ```yaml
 mode: daemonset
 
-config:
-  receivers:
-    hostmetrics:
-      scrapers:
-        cpu:
-        load:
-        memory:
-        disk:
-  service:
-    pipelines:
-      metrics:
-        receivers:
-          - hostmestrics
-          - otlp
-          - prometheus
-
-extraEnvs:
-- name: HOST_PROC
-  value: /hostfs/proc
-- name: HOST_SYS
-  value: /hostfs/sys
-- name: HOST_ETC
-  value: /hostfs/etc
-- name: HOST_VAR
-  value: /hostfs/var
-- name: HOST_RUN
-  value: /hostfs/run
-- name: HOST_DEV
-  value: /hostfs/dev
-extraHostPathMounts:
-- name: hostfs
-  hostPath: /
-  mountPath: /hostfs
-  readOnly: true
-  mountPropagation: HostToContainer
+presets:
+  hostMetrics:
+    enabled: true
 ```
 
 ### Configuration for Kubernetes container logs
@@ -118,28 +86,16 @@ This feature is disabled by default. It has the following requirements:
 - It requires the [contrib](https://github.com/open-telemetry/opentelemetry-collector-contrib) version
 of the collector image.
 
-To enable this feature, set the  `containerLogs.enabled` property to `true` and replace the collector image.
+To enable this feature, set the  `presets.logsCollection.enabled` property to `true`.
 Here is an example `values.yaml`:
 
 ```yaml
 mode: daemonset
 
-containerLogs:
-  enabled: true
-
-config:
-  service:
-    pipelines:
-      logs:
-        receivers:
-          - otlp
-          - filelog
-
-image:
-  repository: otel/opentelemetry-collector-contrib
-
-command:
-  name: otelcol-contrib
+presets:
+  logsCollection:
+    enabled: true
+    includeCollectorLogs: true
 ```
 
 The way this feature works is it adds a `filelog` receiver on the `logs` pipeline. This receiver is preconfigured
@@ -166,30 +122,77 @@ It also clears the `filelog` receiver's `exclude` property, for collector logs t
 ```yaml
 mode: daemonset
 
-containerLogs:
-  enabled: true
+presets:
+  logsCollection:
+    enabled: true
+    includeCollectorLogs: true
 
 config:
   exporters:
     otlphttp:
       endpoint: https://example.com:55681
-  receivers:
-    filelog:
-      exclude: []
   service:
     pipelines:
       logs:
-        receivers:
-          - otlp
-          - filelog
         exporters:
           - otlphttp
+```
 
-image:
-  repository: otel/opentelemetry-collector-contrib
+### Configuration for Kubernetes attributes processor
 
-command:
-  name: otelcol-contrib
+The collector can be configured to add Kubernetes metadata to logs, metrics and traces.
+
+This feature is disabled by default. It has the following requirements:
+
+- It requires [k8sattributesprocessor](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/k8sattributesprocessor) processor to be included in the collector, such as [contrib](https://github.com/open-telemetry/opentelemetry-collector-contrib) version of the collector image.
+
+To enable this feature, set the  `presets.kubernetesAttributes.enabled` property to `true`.
+Here is an example `values.yaml`:
+
+```yaml
+mode: daemonset
+presets:
+  kubernetesAttributes:
+    enabled: true
+```
+
+### Configuration for Kubernetes Cluster Metrics
+
+The collector can be configured to collects cluster-level metrics from the Kubernetes API server. A single instance of this receiver can be used to monitor a cluster.
+
+This feature is disabled by default. It has the following requirements:
+
+- It requires [k8sclusterreceiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/k8sclusterreceiver) to be included in the collector, such as [contrib](https://github.com/open-telemetry/opentelemetry-collector-contrib) version of the collector image.
+- It requires statefulset or deployment mode with a signle replica.
+
+To enable this feature, set the  `presets.clusterMetrics.enabled` property to `true`.
+
+Here is an example `values.yaml`:
+
+```yaml
+mode: deployment
+replicaCount: 1
+presets:
+  clusterMetrics:
+    enabled: true
+```
+
+### Configuration for retrieving Kubelet metrics
+
+The collector can be configured to collect Kubelet metrics.
+
+This feature is disabled by default. It has the following requirements:
+
+- It requires [kubeletstats](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/kubeletstatsreceiver) receiver to be included in the collector, such as [contrib](https://github.com/open-telemetry/opentelemetry-collector-contrib) version of the collector image.
+
+To enable this feature, set the  `presets.kubeletMetrics.enabled` property to `true`.
+Here is an example `values.yaml`:
+
+```yaml
+mode: daemonset
+presets:
+  kubeletMetrics:
+    enabled: true
 ```
 
 ### CRDs

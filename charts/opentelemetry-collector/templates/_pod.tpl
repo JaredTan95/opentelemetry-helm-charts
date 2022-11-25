@@ -10,7 +10,9 @@ containers:
   - name: {{ .Chart.Name }}
     command:
       - /{{ .Values.command.name }}
+      {{- if .Values.configMap.create }}
       - --config=/conf/relay.yaml
+      {{- end }}
       {{- range .Values.command.extraArgs }}
       - {{ . }}
       {{- end }}
@@ -35,6 +37,26 @@ containers:
           fieldRef:
             apiVersion: v1
             fieldPath: status.podIP
+      {{- if .Values.presets.hostMetrics.enabled }}
+      - name: HOST_PROC
+        value: /hostfs/proc
+      - name: HOST_SYS
+        value: /hostfs/sys
+      - name: HOST_ETC
+        value: /hostfs/etc
+      - name: HOST_VAR
+        value: /hostfs/var
+      - name: HOST_RUN
+        value: /hostfs/run
+      - name: HOST_DEV
+        value: /hostfs/dev
+      {{- end }}
+      {{- if .Values.presets.kubeletMetrics.enabled }}
+      - name: K8S_NODE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+      {{- end }}
       {{- with .Values.extraEnvs }}
       {{- . | toYaml | nindent 6 }}
       {{- end }}
@@ -53,8 +75,10 @@ containers:
     resources:
       {{- toYaml .Values.resources | nindent 6 }}
     volumeMounts:
+      {{- if .Values.configMap.create }}
       - mountPath: /conf
         name: {{ .Chart.Name }}-configmap
+      {{- end }}
       {{- range .Values.extraConfigMapMounts }}
       - name: {{ .name }}
         mountPath: {{ .mountPath }}
@@ -79,13 +103,19 @@ containers:
         subPath: {{ .subPath }}
         {{- end }}
       {{- end }}
-      {{- if and $.isAgent .Values.containerLogs.enabled }}
+      {{- if eq (include "opentelemetry-collector.logsCollectionEnabled" .) "true" }}
       - name: varlogpods
         mountPath: /var/log/pods
         readOnly: true
       - name: varlibdockercontainers
         mountPath: /var/lib/docker/containers
         readOnly: true
+      {{- end }}
+      {{- if .Values.presets.hostMetrics.enabled }}
+      - name: hostfs
+        mountPath: /hostfs
+        readOnly: true
+        mountPropagation: HostToContainer
       {{- end }}
       {{- if .Values.extraVolumeMounts }}
       {{- toYaml .Values.extraVolumeMounts | nindent 6 }}
@@ -98,12 +128,14 @@ initContainers:
 priorityClassName: {{ .Values.priorityClassName | quote }}
 {{- end }}
 volumes:
+  {{- if .Values.configMap.create }}
   - name: {{ .Chart.Name }}-configmap
     configMap:
       name: {{ include "opentelemetry-collector.fullname" . }}{{ .configmapSuffix }}
       items:
         - key: relay
           path: relay.yaml
+  {{- end }}
   {{- range .Values.extraConfigMapMounts }}
   - name: {{ .name }}
     configMap:
@@ -119,13 +151,18 @@ volumes:
     secret:
       secretName: {{ .secretName }}
   {{- end }}
-  {{- if and $.isAgent .Values.containerLogs.enabled }}
+  {{- if eq (include "opentelemetry-collector.logsCollectionEnabled" .) "true" }}
   - name: varlogpods
     hostPath:
       path: /var/log/pods
   - name: varlibdockercontainers
     hostPath:
       path: /var/lib/docker/containers
+  {{- end }}
+  {{- if .Values.presets.hostMetrics.enabled }}
+  - name: hostfs
+    hostPath:
+      path: /
   {{- end }}
   {{- if .Values.extraVolumes }}
   {{- toYaml .Values.extraVolumes | nindent 2 }}
