@@ -32,6 +32,9 @@ default:
     tolerations: []
   # Default securityContext for all components
   securityContext: {}
+  # Common labels to add to all demo components resources. Evaluated as a template.
+  additionalLabels: {}
+  # app.kubernetes.io/part-of: my-app
 
 serviceAccount:
   # Specifies whether a service account should be created

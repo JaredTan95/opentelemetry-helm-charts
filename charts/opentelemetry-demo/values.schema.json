@@ -284,6 +284,9 @@
         },
         "podSecurityContext": {
           "type": "object"
+        },
+        "additionalLabels": {
+          "type": "object"
         }
       },
       "required": [

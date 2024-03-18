@@ -26,7 +26,11 @@ app.kubernetes.io/part-of: opentelemetry-demo
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
-
+{{- define "otel-demo.additionalLabels" -}}
+{{- if .Values.default.additionalLabels }}
+{{- tpl (.Values.default.additionalLabels | toYaml) . }}
+{{- end }}
+{{- end }}
 
 {{/*
 Workload (Pod) labels
@@ -39,6 +43,7 @@ app.kubernetes.io/name: {{ include "otel-demo.name" . }}-{{ .name }}
 {{- else }}
 app.kubernetes.io/name: {{ include "otel-demo.name" . }}
 {{- end }}
+{{ include "otel-demo.additionalLabels" . }}
 {{- end }}
 
 
@@ -53,6 +58,7 @@ opentelemetry.io/name: {{ include "otel-demo.name" . }}-{{ .name }}
 {{- else }}
 opentelemetry.io/name: {{ include "otel-demo.name" . }}
 {{- end }}
+{{ include "otel-demo.additionalLabels" . }}
 {{- end }}
 
 {{- define "otel-demo.envOverriden" -}}

@@ -1,0 +1,5 @@
+
+default:
+  # Common labels to add to all demo components resources. Evaluated as a template.
+  additionalLabels:
+    app.kubernetes.io/part-of: my-otel-demo
