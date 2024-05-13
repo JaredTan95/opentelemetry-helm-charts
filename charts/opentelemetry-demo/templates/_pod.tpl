@@ -61,5 +61,27 @@ Get Pod ports
   name: service
 {{-   end }}
 {{- end }}
+{{- end }}
 
+{{/*
+Get Pod additionalLabels
+- Merges default additionalLabels with component additionalLabels.
+*/}}
+{{- define "otel-demo.pod.additionalLabels" -}}
+{{- $defaultLabels := dict }}
+{{- $componentLabels := dict }}
+{{- $mergedLabels := dict }}
+
+{{- $defaultValues := deepCopy .defaultValues }}
+
+{{- if and $defaultValues $defaultValues.additionalLabels }}
+{{- $defaultLabels = $defaultValues.additionalLabels -}}
+{{- end }}
+
+{{- if .additionalLabels }}
+{{- $componentLabels = .additionalLabels -}}
+{{- end }}
+
+{{- $mergedLabels = merge $defaultLabels $componentLabels -}}
+{{- tpl (toYaml $mergedLabels) . }}
 {{- end }}

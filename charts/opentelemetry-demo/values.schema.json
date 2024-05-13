@@ -206,6 +206,9 @@
               "type": "object"
             }
           }
+        },
+        "additionalLabels": {
+          "type": "object"
         }
       },
       "required": [
@@ -280,6 +283,9 @@
           "type": "object"
         },
         "podSecurityContext": {
+          "type": "object"
+        },
+        "additionalLabels": {
           "type": "object"
         }
       },

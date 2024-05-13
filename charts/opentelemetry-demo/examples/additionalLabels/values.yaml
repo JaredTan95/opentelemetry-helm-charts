@@ -1,0 +1,8 @@
+default:
+  additionalLabels:
+    foo: bar
+
+components:
+  accountingService:
+    additionalLabels:
+      my-foo: my-bar
