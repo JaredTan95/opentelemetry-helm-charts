@@ -4,12 +4,14 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: example-opentelemetry-collector-agent
+  namespace: default
   labels:
-    helm.sh/chart: opentelemetry-collector-0.40.1
+    helm.sh/chart: opentelemetry-collector-0.117.1
     app.kubernetes.io/name: opentelemetry-collector
     app.kubernetes.io/instance: example
-    app.kubernetes.io/version: "0.66.0"
+    app.kubernetes.io/version: "0.120.0"
     app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: agent-collector
 spec:
   selector:
     matchLabels:
@@ -21,7 +23,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: 4a1ad72d00639082cca5a80acb0e945ee13fe1a9b821b0aebdcdcd501c4d2cdb
+        checksum/config: 1a83ce3b61e7064e8960f8447627404166c1d6135a775ff13237d2950b22be45
         
       labels:
         app.kubernetes.io/name: opentelemetry-collector
@@ -36,13 +38,15 @@ spec:
       containers:
         - name: opentelemetry-collector
           command:
-            - /otelcol-contrib
+            - /otelcol-k8s
+          args:
             - --config=/conf/relay.yaml
           securityContext:
             {}
-          image: "otel/opentelemetry-collector-contrib:0.66.0"
+          image: "otel/opentelemetry-collector-k8s:0.120.0"
           imagePullPolicy: IfNotPresent
           ports:
+            
             - name: jaeger-compact
               containerPort: 6831
               protocol: UDP
@@ -73,6 +77,8 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.podIP
+            - name: GOMEMLIMIT
+              value: "152MiB"
           livenessProbe:
             httpGet:
               path: /

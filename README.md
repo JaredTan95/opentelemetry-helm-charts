@@ -45,7 +45,9 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 Approvers ([@open-telemetry/helm-approvers](https://github.com/orgs/open-telemetry/teams/helm-approvers)):
 
 - [Alex Birca](https://github.com/Allex1), Adobe
+- [Jared Tan](https://github.com/JaredTan95), DaoCloud
 - [Pierre Tessier](https://github.com/puckpuck), Honeycomb
+- [Povilas](https://github.com/povilasv), Coralogix
 
 Emeritus Approvers:
 
@@ -54,6 +56,7 @@ Emeritus Approvers:
 Maintainers ([@open-telemetry/helm-maintainers](https://github.com/orgs/open-telemetry/teams/helm-maintainers)):
 
 - [Dmitrii Anoshin](https://github.com/dmitryax), Splunk
+- [Jacob Aronoff](https://github.com/jaronoff97), Lightstep
 - [Tyler Helmuth](https://github.com/TylerHelmuth), Honeycomb
 
 Emeritus Maintainers:

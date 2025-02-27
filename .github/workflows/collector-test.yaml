@@ -2,7 +2,7 @@ name: Test Collector Chart
 
 on:
   pull_request:
-    paths: 
+    paths:
     - 'charts/opentelemetry-collector/**'
     branches:
       - main
@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup

@@ -4,12 +4,14 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: example-opentelemetry-collector-agent
+  namespace: default
   labels:
-    helm.sh/chart: opentelemetry-collector-0.40.1
+    helm.sh/chart: opentelemetry-collector-0.117.1
     app.kubernetes.io/name: opentelemetry-collector
     app.kubernetes.io/instance: example
-    app.kubernetes.io/version: "0.66.0"
+    app.kubernetes.io/version: "0.120.0"
     app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: agent-collector
 spec:
   selector:
     matchLabels:
@@ -21,7 +23,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: f53bca9c4459ca2c73822bb25ba9c2d6303781b02a7d6bc6169ae1e095b4bf49
+        checksum/config: 7f7cae1b12583219afab5483e49bc39880ed31c8a52615a419253353d8cf9369
         
       labels:
         app.kubernetes.io/name: opentelemetry-collector
@@ -36,13 +38,15 @@ spec:
       containers:
         - name: opentelemetry-collector
           command:
-            - /otelcol-contrib
+            - /otelcol-k8s
+          args:
             - --config=/conf/relay.yaml
           securityContext:
             {}
-          image: "otel/opentelemetry-collector-contrib:0.66.0"
+          image: "otel/opentelemetry-collector-k8s:0.120.0"
           imagePullPolicy: IfNotPresent
           ports:
+            
             - name: jaeger-compact
               containerPort: 6831
               protocol: UDP
@@ -73,18 +77,6 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.podIP
-            - name: HOST_PROC
-              value: /hostfs/proc
-            - name: HOST_SYS
-              value: /hostfs/sys
-            - name: HOST_ETC
-              value: /hostfs/etc
-            - name: HOST_VAR
-              value: /hostfs/var
-            - name: HOST_RUN
-              value: /hostfs/run
-            - name: HOST_DEV
-              value: /hostfs/dev
           livenessProbe:
             httpGet:
               path: /
@@ -93,10 +85,6 @@ spec:
             httpGet:
               path: /
               port: 13133
-          resources:
-            limits:
-              cpu: 256m
-              memory: 512Mi
           volumeMounts:
             - mountPath: /conf
               name: opentelemetry-collector-configmap

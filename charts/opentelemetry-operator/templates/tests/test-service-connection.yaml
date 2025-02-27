@@ -3,11 +3,11 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "{{ include "opentelemetry-operator.name" . }}-controller-manager-metrics-test-connection"
+  name: "{{ include "opentelemetry-operator.fullname" . }}-metrics"
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "opentelemetry-operator.labels" . | nindent 4 }}
-    control-plane: controller-manager
+    app.kubernetes.io/component: controller-manager
   annotations:
     "helm.sh/hook": test
 spec:
@@ -16,7 +16,7 @@ spec:
       image: "{{ .Values.testFramework.image.repository }}:{{ .Values.testFramework.image.tag }}"
       env:
         - name: MANAGER_METRICS_SERVICE_CLUSTERIP
-          value: "{{ include "opentelemetry-operator.name" . }}-controller-manager-metrics-service"
+          value: "{{ include "opentelemetry-operator.fullname" . }}"
         - name: MANAGER_METRICS_SERVICE_PORT
           value: "{{ .Values.kubeRBACProxy.ports.proxyPort }}"
       command:
@@ -31,27 +31,36 @@ spec:
           else exit 1
           fi
   restartPolicy: Never
+  {{- with .Values.affinity }}
+  affinity: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.tolerations }}
+  tolerations: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.nodeSelector }}
+  nodeSelector: {{ toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "{{ include "opentelemetry-operator.name" . }}-webhook-test-connection"
+  name: "{{ include "opentelemetry-operator.fullname" . }}-webhook"
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "opentelemetry-operator.labels" . | nindent 4 }}
-    control-plane: controller-manager
+    app.kubernetes.io/component: controller-manager
   annotations:
     "helm.sh/hook": test
 spec:
   containers:
     - name: wget
-      image: busybox
+      image: "{{ .Values.testFramework.image.repository }}:{{ .Values.testFramework.image.tag }}"
       env:
         - name: WEBHOOK_SERVICE_CLUSTERIP
-          value: "{{ include "opentelemetry-operator.name" . }}-webhook-service"
+          value: "{{ include "opentelemetry-operator.fullname" . }}-webhook"
         - name: WEBHOOK_SERVICE_PORT
-          value: "443"
+          value: "{{ .Values.admissionWebhooks.servicePort }}"
       command:
         - sh
         - -c
@@ -64,3 +73,12 @@ spec:
           else exit 1
           fi
   restartPolicy: Never
+  {{- with .Values.affinity }}
+  affinity: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.tolerations }}
+  tolerations: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.nodeSelector }}
+  nodeSelector: {{ toYaml . | nindent 4 }}
+  {{- end }}

@@ -1,5 +1,11 @@
 mode: daemonset
 
+image:
+  repository: "otel/opentelemetry-collector-k8s"
+
+command:
+  name: "otelcol-k8s"
+
 config:
   exporters:
     otlp:
@@ -11,18 +17,22 @@ config:
       logs:
         exporters:
          - otlp
-         - logging
+         - debug
       metrics:
         exporters:
          - otlp
-         - logging
+         - debug
       traces:
         exporters:
          - otlp
-         - logging
+         - debug
 
 resources:
   limits:
     cpu: 100m
     memory: 200M
+
+serviceAccount:
+  create: false
+  name: "example-opentelemetry-collector"
 

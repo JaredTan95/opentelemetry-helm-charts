@@ -3,20 +3,30 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: {{ printf "%s/%s-serving-cert" .Release.Namespace (include "opentelemetry-operator.name" .) }}
+    cert-manager.io/inject-ca-from: {{ include "opentelemetry-operator.webhookCertAnnotation" . }}
   labels:
     {{- include "opentelemetry-operator.labels" . | nindent 4 }}
-  name: {{ template "opentelemetry-operator.name" . }}-mutating-webhook-configuration
+    app.kubernetes.io/component: webhook
+  name: {{ template "opentelemetry-operator.MutatingWebhookName" . }}-mutation
 webhooks:
   - admissionReviewVersions:
       - v1
     clientConfig:
       service:
-        name: {{ template "opentelemetry-operator.name" . }}-webhook-service
+        name: {{ template "opentelemetry-operator.fullname" . }}-webhook
         namespace: {{ .Release.Namespace }}
         path: /mutate-opentelemetry-io-v1alpha1-instrumentation
-    failurePolicy: Fail
+        port: {{ .Values.admissionWebhooks.servicePort }}
+    failurePolicy: {{ .Values.admissionWebhooks.failurePolicy }}
     name: minstrumentation.kb.io
+    {{- if .Values.admissionWebhooks.namespaceSelector }}
+    namespaceSelector:
+    {{- toYaml .Values.admissionWebhooks.namespaceSelector | nindent 6 }}
+    {{- end }}
+    {{- if .Values.admissionWebhooks.objectSelector }}
+    objectSelector:
+    {{- toYaml .Values.admissionWebhooks.objectSelector | nindent 6 }}
+    {{- end }}
     rules:
     - apiGroups:
         - opentelemetry.io
@@ -27,16 +37,19 @@ webhooks:
         - UPDATE
       resources:
         - instrumentations
+      scope: Namespaced
     sideEffects: None
+    timeoutSeconds: {{ .Values.admissionWebhooks.timeoutSeconds }}
   - admissionReviewVersions:
       - v1
     clientConfig:
       service:
-        name: {{ template "opentelemetry-operator.name" . }}-webhook-service
+        name: {{ template "opentelemetry-operator.fullname" . }}-webhook
         namespace: {{ .Release.Namespace }}
-        path: /mutate-opentelemetry-io-v1alpha1-opentelemetrycollector
+        path: /mutate-opentelemetry-io-v1beta1-opentelemetrycollector
+        port: {{ .Values.admissionWebhooks.servicePort }}
     failurePolicy: {{ .Values.admissionWebhooks.failurePolicy }}
-    name: mopentelemetrycollector.kb.io
+    name: mopentelemetrycollectorbeta.kb.io
     {{- if .Values.admissionWebhooks.namespaceSelector }}
     namespaceSelector:
     {{- toYaml .Values.admissionWebhooks.namespaceSelector | nindent 6 }}
@@ -49,21 +62,23 @@ webhooks:
       - apiGroups:
           - opentelemetry.io
         apiVersions:
-          - v1alpha1
+          - v1beta1
         operations:
           - CREATE
           - UPDATE
         resources:
           - opentelemetrycollectors
+        scope: Namespaced
     sideEffects: None
     timeoutSeconds: {{ .Values.admissionWebhooks.timeoutSeconds }}
   - admissionReviewVersions:
       - v1
     clientConfig:
       service:
-        name: {{ template "opentelemetry-operator.name" . }}-webhook-service
+        name: {{ template "opentelemetry-operator.fullname" . }}-webhook
         namespace: {{ .Release.Namespace }}
         path: /mutate-v1-pod
+        port: {{ .Values.admissionWebhooks.servicePort }}
     {{- if .Values.admissionWebhooks.namespaceSelector }}
     namespaceSelector:
     {{- toYaml .Values.admissionWebhooks.namespaceSelector | nindent 6 }}
@@ -72,7 +87,7 @@ webhooks:
     objectSelector:
     {{- toYaml .Values.admissionWebhooks.objectSelector | nindent 6 }}
     {{- end }}
-    failurePolicy: Ignore
+    failurePolicy: {{ .Values.admissionWebhooks.pods.failurePolicy }}
     name: mpod.kb.io
     rules:
       - apiGroups:
@@ -81,9 +96,9 @@ webhooks:
           - v1
         operations:
           - CREATE
-          - UPDATE
         resources:
           - pods
+        scope: Namespaced
     sideEffects: None
     timeoutSeconds: {{ .Values.admissionWebhooks.timeoutSeconds }}
 ---
@@ -91,19 +106,21 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: {{ printf "%s/%s-serving-cert" .Release.Namespace (include "opentelemetry-operator.name" .) }}
+    cert-manager.io/inject-ca-from: {{ include "opentelemetry-operator.webhookCertAnnotation" . }}
   labels:
     {{- include "opentelemetry-operator.labels" . | nindent 4 }}
-  name: {{ template "opentelemetry-operator.name" . }}-validating-webhook-configuration
+    app.kubernetes.io/component: webhook
+  name: {{ template "opentelemetry-operator.fullname" . }}-validation
 webhooks:
   - admissionReviewVersions:
       - v1
     clientConfig:
       service:
-        name: {{ template "opentelemetry-operator.name" . }}-webhook-service
+        name: {{ template "opentelemetry-operator.fullname" . }}-webhook
         namespace: {{ .Release.Namespace }}
         path: /validate-opentelemetry-io-v1alpha1-instrumentation
-    failurePolicy: Fail
+        port: {{ .Values.admissionWebhooks.servicePort }}
+    failurePolicy: {{ .Values.admissionWebhooks.failurePolicy }}
     name: vinstrumentationcreateupdate.kb.io
     {{- if .Values.admissionWebhooks.namespaceSelector }}
     namespaceSelector:
@@ -123,15 +140,17 @@ webhooks:
         - UPDATE
       resources:
         - instrumentations
+      scope: Namespaced
     sideEffects: None
     timeoutSeconds: {{ .Values.admissionWebhooks.timeoutSeconds }}
   - admissionReviewVersions:
       - v1
     clientConfig:
       service:
-        name: {{ template "opentelemetry-operator.name" . }}-webhook-service
+        name: {{ template "opentelemetry-operator.fullname" . }}-webhook
         namespace: {{ .Release.Namespace }}
         path: /validate-opentelemetry-io-v1alpha1-instrumentation
+        port: {{ .Values.admissionWebhooks.servicePort }}
     failurePolicy: Ignore
     name: vinstrumentationdelete.kb.io
     {{- if .Values.admissionWebhooks.namespaceSelector }}
@@ -151,17 +170,19 @@ webhooks:
           - DELETE
         resources:
           - instrumentations
+        scope: Namespaced
     sideEffects: None
     timeoutSeconds: {{ .Values.admissionWebhooks.timeoutSeconds }}
   - admissionReviewVersions:
       - v1
     clientConfig:
       service:
-        name: {{ template "opentelemetry-operator.name" . }}-webhook-service
+        name: {{ template "opentelemetry-operator.fullname" . }}-webhook
         namespace: {{ .Release.Namespace }}
-        path: /validate-opentelemetry-io-v1alpha1-opentelemetrycollector
+        path: /validate-opentelemetry-io-v1beta1-opentelemetrycollector
+        port: {{ .Values.admissionWebhooks.servicePort }}
     failurePolicy: {{ .Values.admissionWebhooks.failurePolicy }}
-    name: vopentelemetrycollectorcreateupdate.kb.io
+    name: vopentelemetrycollectorcreateupdatebeta.kb.io
     {{- if .Values.admissionWebhooks.namespaceSelector }}
     namespaceSelector:
     {{- toYaml .Values.admissionWebhooks.namespaceSelector | nindent 6 }}
@@ -174,23 +195,25 @@ webhooks:
       - apiGroups:
           - opentelemetry.io
         apiVersions:
-          - v1alpha1
+          - v1beta1
         operations:
           - CREATE
           - UPDATE
         resources:
           - opentelemetrycollectors
+        scope: Namespaced
     sideEffects: None
     timeoutSeconds: {{ .Values.admissionWebhooks.timeoutSeconds }}
   - admissionReviewVersions:
       - v1
     clientConfig:
       service:
-        name: {{ template "opentelemetry-operator.name" . }}-webhook-service
+        name: {{ template "opentelemetry-operator.fullname" . }}-webhook
         namespace: {{ .Release.Namespace }}
-        path: /validate-opentelemetry-io-v1alpha1-opentelemetrycollector
+        path: /validate-opentelemetry-io-v1beta1-opentelemetrycollector
+        port: {{ .Values.admissionWebhooks.servicePort }}
     failurePolicy: Ignore
-    name: vopentelemetrycollectordelete.kb.io
+    name: vopentelemetrycollectordeletebeta.kb.io
     {{- if .Values.admissionWebhooks.namespaceSelector }}
     namespaceSelector:
     {{- toYaml .Values.admissionWebhooks.namespaceSelector | nindent 6 }}
@@ -203,11 +226,12 @@ webhooks:
       - apiGroups:
           - opentelemetry.io
         apiVersions:
-          - v1alpha1
+          - v1beta1
         operations:
           - DELETE
         resources:
           - opentelemetrycollectors
+        scope: Namespaced
     sideEffects: None
     timeoutSeconds: {{ .Values.admissionWebhooks.timeoutSeconds }}
 {{- end }}

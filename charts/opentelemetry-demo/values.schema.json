@@ -11,14 +11,24 @@
     "global": {
       "type": "object"
     },
-    "observability": {
-      "$ref": "#/definitions/Observability"
-    },
     "default": {
       "$ref": "#/definitions/Default"
     },
     "serviceAccount": {
-      "type": "string"
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "create": {
+          "type": "boolean"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["create"]
     },
     "components": {
       "$ref": "#/definitions/Components"
@@ -26,16 +36,21 @@
     "opentelemetry-collector": {
       "type": "object"
     },
+    "jaeger": {
+      "type": "object"
+    },
     "prometheus": {
       "type": "object"
     },
     "grafana": {
       "type": "object"
+    },
+    "opensearch": {
+      "type": "object"
     }
   },
   "required": [
     "components",
-    "observability",
     "serviceAccount"
   ],
   "definitions": {
@@ -43,58 +58,67 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "redis": {
-          "$ref": "#/definitions/Service"
+        "accounting": {
+          "$ref": "#/definitions/Component"
         },
-        "adService": {
-          "$ref": "#/definitions/Service"
+        "ad": {
+          "$ref": "#/definitions/Component"
         },
-        "cartService": {
-          "$ref": "#/definitions/Service"
+        "cart": {
+          "$ref": "#/definitions/Component"
         },
-        "checkoutService": {
-          "$ref": "#/definitions/Service"
+        "checkout": {
+          "$ref": "#/definitions/Component"
         },
-        "currencyService": {
-          "$ref": "#/definitions/Service"
+        "currency": {
+          "$ref": "#/definitions/Component"
         },
-        "emailService": {
-          "$ref": "#/definitions/Service"
+        "email": {
+          "$ref": "#/definitions/Component"
         },
-        "featureflagService": {
-          "$ref": "#/definitions/Service"
+        "flagd": {
+          "$ref": "#/definitions/Component"
         },
-        "ffsPostgres": {
-          "$ref": "#/definitions/Service"
+        "fraud-detection": {
+          "$ref": "#/definitions/Component"
         },
         "frontend": {
-          "$ref": "#/definitions/Service"
+          "$ref": "#/definitions/Component"
         },
-        "frontendProxy": {
-          "$ref": "#/definitions/Service"
+        "frontend-proxy": {
+          "$ref": "#/definitions/Component"
         },
-        "loadgenerator": {
-          "$ref": "#/definitions/Service"
+        "image-provider": {
+          "$ref": "#/definitions/Component"
         },
-        "paymentService": {
-          "$ref": "#/definitions/Service"
+        "load-generator": {
+          "$ref": "#/definitions/Component"
         },
-        "productCatalogService": {
-          "$ref": "#/definitions/Service"
+        "payment": {
+          "$ref": "#/definitions/Component"
         },
-        "recommendationService": {
-          "$ref": "#/definitions/Service"
+        "product-catalog": {
+          "$ref": "#/definitions/Component"
         },
-        "shippingService": {
-          "$ref": "#/definitions/Service"
+        "quote": {
+          "$ref": "#/definitions/Component"
         },
-        "quoteService": {
-          "$ref": "#/definitions/Service"
+        "recommendation": {
+          "$ref": "#/definitions/Component"
+        },
+        "shipping": {
+          "$ref": "#/definitions/Component"
+        },
+        "kafka": {
+          "$ref": "#/definitions/Component"
+        },
+        "valkey-cart": {
+          "$ref": "#/definitions/Component"
         }
       },
       "title": "Components"
     },
-    "Service": {
+    "Component": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -114,11 +138,23 @@
             "env"
           ]
         },
-        "serviceType": {
-          "type": "string"
+        "imageOverride": {
+          "$ref": "#/definitions/Image"
         },
-        "servicePort": {
+        "replicas": {
           "type": "integer"
+        },
+        "revisionHistoryLimit": {
+          "type": "integer"
+        },
+        "service": {
+          "$ref": "#/definitions/Service"
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Port"
+          }
         },
         "env": {
           "type": "array",
@@ -132,14 +168,24 @@
             "$ref": "#/definitions/Env"
           }
         },
-        "ports": {
+        "command": {
+          "type": "array",
+          "items": {}
+        },
+        "mountedConfigMaps": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Port"
+            "$ref": "#/definitions/MountedConfigMap"
           }
         },
-        "imageOverride": {
-          "$ref": "#/definitions/Image"
+        "mountedEmptyDirs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MountedEmptyDirs"
+          }
+        },
+        "livenessProbe": {
+          "$ref": "#/definitions/LivenessProbe"
         },
         "schedulingRules": {
           "$ref": "#/definitions/SchedulingRules"
@@ -149,6 +195,24 @@
         },
         "resources": {
           "$ref": "#/definitions/ContainerResources"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "podSecurityContext": {
+          "type": "object"
+        },
+        "ingress": {
+          "$ref": "#/definitions/Ingress"
+        },
+        "initContainers": {
+          "type": "array"
+        },
+        "sidecarContainers":{
+          "type": "array"
+        },
+        "additionalVolumes": {
+          "type": "array"
         }
       },
       "required": [
@@ -210,16 +274,29 @@
             "$ref": "#/definitions/Env"
           }
         },
+        "replicas": {
+          "type": "integer"
+        },
+        "revisionHistoryLimit": {
+          "type": "integer"
+        },
         "image": {
           "$ref": "#/definitions/Image"
         },
         "schedulingRules": {
           "$ref": "#/definitions/SchedulingRules"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "podSecurityContext": {
+          "type": "object"
         }
       },
       "required": [
         "image",
-        "schedulingRules"
+        "schedulingRules",
+        "securityContext"
       ],
       "title": "Default"
     },
@@ -295,6 +372,25 @@
         "key"
       ]
     },
+    "Service": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "nodePort": {
+          "type": "integer"
+        },
+        "annotations": {
+          "type": "object"
+        }
+      },
+      "title": "Service"
+    },
     "Port": {
       "type": "object",
       "additionalProperties": false,
@@ -311,69 +407,6 @@
         "value"
       ],
       "title": "Port"
-    },
-    "Observability": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "otelcol": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            }
-          }
-        },
-        "jaeger": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "image": {
-              "$ref": "#/definitions/Image"
-            },
-            "args": {
-              "type": "array",
-              "items": {}
-            },
-            "resources": {
-              "$ref": "#/definitions/ContainerResources"
-            },
-            "serviceType": {
-              "type": "string"
-            },
-            "schedulingRules": {
-              "$ref": "#/definitions/SchedulingRules"
-            }
-          }
-        },
-        "prometheus": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            }
-          }
-        },
-        "grafana": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            }
-          }
-        }
-      },
-      "required": [
-        "jaeger",
-        "otelcol"
-      ],
-      "title": "Observability"
     },
     "Image": {
       "type": "object",
@@ -433,6 +466,279 @@
           "items": {}
         }
       }
+    },
+    "Ingress": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "ingressClassName": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "pathType": {
+                      "type": "string",
+                      "enum": [
+                        "Exact",
+                        "Prefix",
+                        "ImplementationSpecific"
+                      ]
+                    },
+                    "port": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "pathType",
+                    "port"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "paths"
+            ]
+          }
+        },
+        "tls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "secretName": {
+                "type": "string"
+              },
+              "hosts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "additionalIngresses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "ingressClassName": {
+                "type": "string"
+              },
+              "annotations": {
+                "type": "object"
+              },
+              "hosts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "host": {
+                      "type": "string"
+                    },
+                    "paths": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "path": {
+                            "type": "string"
+                          },
+                          "pathType": {
+                            "type": "string",
+                            "enum": [
+                              "Exact",
+                              "Prefix",
+                              "ImplementationSpecific"
+                            ]
+                          },
+                          "port": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "pathType",
+                          "port"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "paths"
+                  ]
+                }
+              },
+              "tls": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "secretName": {
+                      "type": "string"
+                    },
+                    "hosts": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "name"
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ]
+    },
+    "LivenessProbe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "httpGet"
+      ],
+      "properties": {
+        "httpGet": {
+          "type": "object",
+          "required": [
+            "port"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "host": {
+              "type": "string"
+            },
+            "scheme": {
+              "type": "string"
+            },
+            "httpHeaders": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "port": {
+              "type": "integer"
+            }
+          }
+        },
+        "initialDelaySeconds": {
+          "type": "integer"
+        },
+        "timeoutSeconds": {
+          "type": "integer"
+        },
+        "periodSeconds": {
+          "type": "integer"
+        },
+        "successThreshold": {
+          "type": "integer"
+        },
+        "failureThreshold": {
+          "type": "integer"
+        }
+      }
+    },
+    "MountedConfigMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "mountPath": {
+          "type": "string"
+        },
+        "subPath": {
+          "type": "string"
+        },
+        "existingConfigMap": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "name",
+        "mountPath"
+      ],
+      "oneOf": [
+        {
+          "required": ["existingConfigMap"]
+        },
+        {
+          "required": ["data"]
+        }
+      ]
+    },
+    "MountedEmptyDirs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "mountPath": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "mountPath"
+      ]
     }
   }
 }
